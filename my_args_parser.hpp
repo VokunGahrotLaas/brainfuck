@@ -97,7 +97,7 @@ MyArgsParser::MyArgsParser(int argc, const char* argv[]):
 
 	if (m_args_map.count("r") == 1) {
 		reg_size = parse_size_t("r", "reg_size");
-		if (std::unordered_set({1, 2, 4, 8}).count(reg_size) != 1)
+		if (std::unordered_set<std::size_t>({1, 2, 4, 8}).count(reg_size) != 1)
 			throw std::invalid_argument("-r: reg_size must be 1, 2, 4 or 8");
 	}
 
