@@ -34,4 +34,6 @@
 *.bf
 makefile
 brainfuck
-examples
+examples/
+builds/
+releases/
