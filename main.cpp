@@ -88,7 +88,7 @@ void transcompile(const MyArgsParser& parser, const std::string& bf_filename, co
 			cpp_file << std::string(tabs, '\t') << "}" << std::endl;
 		} else if (c == '.') {
 			if (parser.ascii)
-				cpp_file << std::string(tabs, '\t') << "cout << static_cast<char>(*p);" << std::endl;
+				cpp_file << std::string(tabs, '\t') << "cout << static_cast<char>(*p) << flush;" << std::endl;
 			else
 				cpp_file << std::string(tabs, '\t') << "cout << *p << endl;" << std::endl;
 		} else if (c == ',') {
@@ -102,7 +102,10 @@ void transcompile(const MyArgsParser& parser, const std::string& bf_filename, co
 	if (tabs > 1)
 		throw std::invalid_argument("missing '[' in '" + bf_filename + "'");
 
-	cpp_file << "}" << std::endl;
+	cpp_file
+		<< "\treturn EXIT_SUCCESS;" << std::endl
+		<< "}" << std::endl
+	;
 
 	if (parser.verbose)
 		std::cout << "Transcompiled '" << bf_filename << "' from brainfuck to C++ successfully." << std::endl;
