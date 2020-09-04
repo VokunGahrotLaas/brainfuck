@@ -63,19 +63,47 @@ void transcompile(const MyArgsParser& parser, const std::string& bf_filename, co
 	char last = '\0';
 	std::size_t rep = 0;
 	std::size_t tabs = 1;
+	std::unordered_set<char> charset({'[', ']', '+', '-', '>', '<', '.', ','});
 	while (!bf_file.eof()) {
 		char c = bf_file.get();
+		if (charset.count(c) != 1)
+			continue;
 		if (c == last) {
+			if (parser.debug)
+				std::cout << "same ";
 			++rep;
+		} else if ((last == '+' && c == '-') || (last == '-' && c == '+') || (last == '>' && c == '<') || (last == '<' && c == '>')) {
+			if (parser.debug)
+				std::cout << "opp ";
+			--rep;
+			if (rep <= 0) {
+				last = '\0';
+				rep = 0;
+			}
 		} else {
-			if (last == '+')
-				cpp_file << std::string(tabs, '\t') << "*p += " << rep << ";" << std::endl;
-			else if (last == '-')
-				cpp_file << std::string(tabs, '\t') << "*p -= " << rep << ";" << std::endl;
-			else if (last == '>')
-				cpp_file << std::string(tabs, '\t') << "p += " << rep << ";" << std::endl;
-			else if (last == '<')
-				cpp_file << std::string(tabs, '\t') << "p -= " << rep << ";" << std::endl;
+			if (parser.debug)
+				std::cout << "diff ";
+			 if (last == '+') {
+				if (rep > 1)
+					cpp_file << std::string(tabs, '\t') << "*p += " << rep << ";" << std::endl;
+				else
+					cpp_file << std::string(tabs, '\t') << "++*p;" << std::endl;
+			} else if (last == '-') {
+				if (rep > 1)
+					cpp_file << std::string(tabs, '\t') << "*p -= " << rep << ";" << std::endl;
+				else
+					cpp_file << std::string(tabs, '\t') << "--*p;" << std::endl;
+			} else if (last == '>') {
+				if (rep > 1)
+					cpp_file << std::string(tabs, '\t') << "p += " << rep << ";" << std::endl;
+				else
+					cpp_file << std::string(tabs, '\t') << "++p;" << std::endl;
+			} else if (last == '<') {
+				if (rep > 1)
+					cpp_file << std::string(tabs, '\t') << "p -= " << rep << ";" << std::endl;
+				else
+					cpp_file << std::string(tabs, '\t') << "--p;" << std::endl;
+			}
 			rep = 1;
 		}
 		if (c == '[') {
@@ -97,8 +125,35 @@ void transcompile(const MyArgsParser& parser, const std::string& bf_filename, co
 			else
 				cpp_file << std::string(tabs, '\t') << "cin >> *p;" << std::endl;
 		}
+		if (parser.debug)
+			std::cout << "c: " << c << " last: " << last << " rep: " << rep << std::endl;
+		if ((last == '+' && c == '-') || (last == '-' && c == '+') || (last == '>' && c == '<') || (last == '<' && c == '>'))
+			continue;
 		last = c;
 	}
+	
+	if (last == '+') {
+		if (rep > 1)
+			cpp_file << std::string(tabs, '\t') << "*p += " << rep << ";" << std::endl;
+		else
+			cpp_file << std::string(tabs, '\t') << "++*p;" << std::endl;
+	} else if (last == '-') {
+		if (rep > 1)
+			cpp_file << std::string(tabs, '\t') << "*p -= " << rep << ";" << std::endl;
+		else
+			cpp_file << std::string(tabs, '\t') << "--*p;" << std::endl;
+	} else if (last == '>') {
+		if (rep > 1)
+			cpp_file << std::string(tabs, '\t') << "p += " << rep << ";" << std::endl;
+		else
+			cpp_file << std::string(tabs, '\t') << "++p;" << std::endl;
+	} else if (last == '<') {
+		if (rep > 1)
+			cpp_file << std::string(tabs, '\t') << "p -= " << rep << ";" << std::endl;
+		else
+			cpp_file << std::string(tabs, '\t') << "--p;" << std::endl;
+	}
+
 	if (tabs > 1)
 		throw std::invalid_argument("missing '[' in '" + bf_filename + "'");
 
